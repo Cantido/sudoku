@@ -86,6 +86,7 @@ defmodule SudokuPropertyTest do
         |> Sudoku.put(cell1, val1)
         |> Sudoku.put(cell2, val2)
         |> Sudoku.delete(cell1)
+
       assert Sudoku.get(board, cell2) == val2
     end
   end

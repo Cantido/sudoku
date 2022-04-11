@@ -59,10 +59,8 @@ defmodule Sudoku do
 
   @empty_board Stream.cycle([nil]) |> Enum.take(81)
 
-  defstruct [
-    squares: @empty_board,
-    hints: @empty_board
-  ]
+  defstruct squares: @empty_board,
+            hints: @empty_board
 
   defguardp is_cell(cell) when elem(cell, 0) in 0..8 and elem(cell, 1) in 0..8
   defguardp is_cell_value(x) when is_integer(x) and x in 1..9
@@ -77,7 +75,6 @@ defmodule Sudoku do
   def new do
     %Sudoku{}
   end
-
 
   @doc """
   Put a value into a cell. Normal cell values are replaced, but this function will raise an error if you try to put a value over a hint.
@@ -107,10 +104,12 @@ defmodule Sudoku do
       ** (RuntimeError) Cannot insert a value that is already present in the current row, column, and subgrid
 
   """
-  def put(%Sudoku{squares: squares} = sudoku, cell, val) when is_cell(cell) and is_cell_value(val) do
+  def put(%Sudoku{squares: squares} = sudoku, cell, val)
+      when is_cell(cell) and is_cell_value(val) do
     if is_hint?(sudoku, cell) do
       raise "Cannot insert a value over a hint"
     end
+
     unless can_put?(sudoku, cell, val) do
       raise "Cannot insert a value that is already present in the current row, column, and subgrid"
     end
@@ -153,7 +152,8 @@ defmodule Sudoku do
       false
 
   """
-  def can_put?(%Sudoku{} = sudoku, cell = {col, row}, val) when is_cell(cell) and is_cell_value(val) do
+  def can_put?(%Sudoku{} = sudoku, cell = {col, row}, val)
+      when is_cell(cell) and is_cell_value(val) do
     if is_hint?(sudoku, cell) do
       false
     else
@@ -165,7 +165,7 @@ defmodule Sudoku do
       column_values = get_column(sudoku_with_space, col)
       subgrid_values = get_subgrid_of(sudoku_with_space, cell)
 
-      (val not in row_values) and (val not in column_values) and (val not in subgrid_values)
+      val not in row_values and val not in column_values and val not in subgrid_values
     end
   end
 
@@ -184,6 +184,7 @@ defmodule Sudoku do
   """
   def get(%Sudoku{squares: squares, hints: hints}, cell) when is_cell(cell) do
     index = cell_index(cell)
+
     if hint_val = Enum.at(hints, index) do
       hint_val
     else
@@ -213,7 +214,7 @@ defmodule Sudoku do
 
     for subgrid_col <- subgrid_start_col..(subgrid_start_col + 2),
         subgrid_row <- subgrid_start_row..(subgrid_start_row + 2) do
-        get(sudoku, {subgrid_col, subgrid_row})
+      get(sudoku, {subgrid_col, subgrid_row})
     end
   end
 
@@ -253,7 +254,8 @@ defmodule Sudoku do
       ...> |> Sudoku.get({3, 7})
       9
   """
-  def put_hint(%Sudoku{hints: hints} = sudoku, cell, val) when is_cell(cell) and is_cell_value(val) do
+  def put_hint(%Sudoku{hints: hints} = sudoku, cell, val)
+      when is_cell(cell) and is_cell_value(val) do
     %Sudoku{sudoku | hints: List.replace_at(hints, cell_index(cell), val)}
   end
 
@@ -261,9 +263,10 @@ defmodule Sudoku do
   Delete a hint from the board.
   """
   def delete_hint(%Sudoku{squares: squares, hints: hints} = sudoku, cell) when is_cell(cell) do
-    %Sudoku{sudoku |
-      squares: List.replace_at(squares, cell_index(cell), nil),
-      hints: List.replace_at(hints, cell_index(cell), nil)
+    %Sudoku{
+      sudoku
+      | squares: List.replace_at(squares, cell_index(cell), nil),
+        hints: List.replace_at(hints, cell_index(cell), nil)
     }
   end
 
@@ -284,7 +287,7 @@ defmodule Sudoku do
   end
 
   defp cell_index({col, row}) do
-    col + (row * 9)
+    col + row * 9
   end
 
   @doc """
@@ -380,7 +383,7 @@ defmodule Sudoku do
       hint_count = Enum.count(sudoku.hints, fn x -> not is_nil(x) end)
       normal_count = Enum.count(sudoku.squares, fn x -> not is_nil(x) end)
 
-      completed? = (hint_count + normal_count) == 81
+      completed? = hint_count + normal_count == 81
 
       stats = %{
         completed: completed?,

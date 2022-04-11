@@ -22,7 +22,7 @@ defmodule Sudoku.MixProject do
   defp deps do
     [
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
-      {:stream_data, "~> 0.5", only: :test}
+      {:stream_data, "~> 0.5", only: [:dev, :test]}
     ]
   end
 end
