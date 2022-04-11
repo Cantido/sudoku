@@ -62,6 +62,16 @@ defmodule Sudoku do
   defstruct squares: @empty_board,
             hints: @empty_board
 
+  @opaque t() :: %__MODULE__{
+    squares: nonempty_list(cell_value()),
+    hints: nonempty_list(cell_value())
+  }
+
+  @type row() :: 0..8
+  @type column() :: 0..8
+  @type cell() :: {column(), row()}
+  @type cell_value() :: nil | 1..9
+
   defguardp is_row(row) when row in 0..8
   defguardp is_column(col) when col in 0..8
   defguardp is_cell(cell) when is_column(elem(cell, 0)) and is_row(elem(cell, 1))
@@ -74,6 +84,7 @@ defmodule Sudoku do
       ...> |> Sudoku.empty?({0, 0})
       true
   """
+  @spec new() :: t()
   def new do
     %Sudoku{}
   end
@@ -106,6 +117,7 @@ defmodule Sudoku do
       ** (RuntimeError) Cannot insert a value that is already present in the current row, column, and subgrid
 
   """
+  @spec put(t(), cell(), cell_value()) :: t()
   def put(%Sudoku{squares: squares} = sudoku, cell, val)
       when is_cell(cell) and is_cell_value(val) do
     if is_hint?(sudoku, cell) do
@@ -154,6 +166,7 @@ defmodule Sudoku do
       false
 
   """
+  @spec can_put?(t(), cell(), cell_value()) :: boolean()
   def can_put?(%Sudoku{} = sudoku, cell = {col, row}, val)
       when is_cell(cell) and is_cell_value(val) do
     if is_hint?(sudoku, cell) do
@@ -184,6 +197,7 @@ defmodule Sudoku do
       ...> |> Sudoku.get({3, 7})
       9
   """
+  @spec get(t(), cell()) :: cell_value()
   def get(%Sudoku{squares: squares, hints: hints}, cell) when is_cell(cell) do
     index = cell_index(cell)
 
@@ -202,6 +216,7 @@ defmodule Sudoku do
       ...> |> Sudoku.get_row(2)
       [nil, 1, nil, nil, nil, nil, nil, nil, nil]
   """
+  @spec get_row(t(), row()) :: nonempty_list(cell_value())
   def get_row(sudoku, row) when is_row(row) do
     for i <- 0..8, do: get(sudoku, {i, row})
   end
@@ -214,6 +229,7 @@ defmodule Sudoku do
       ...> |> Sudoku.get_column(1)
       [nil, nil, 1, nil, nil, nil, nil, nil, nil]
   """
+  @spec get_column(t(), column()) :: nonempty_list(cell_value())
   def get_column(sudoku, column) when is_column(column) do
     for i <- 0..8, do: get(sudoku, {column, i})
   end
@@ -226,6 +242,7 @@ defmodule Sudoku do
       ...> |> Sudoku.get_subgrid_of({1, 1})
       [1, nil, nil, nil, nil, nil, nil, nil, nil]
   """
+  @spec get_subgrid_of(t(), cell()) :: nonempty_list(cell_value())
   def get_subgrid_of(sudoku, {col, row} = cell) when is_cell(cell) do
     subgrid_start_col = col - rem(col, 3)
     subgrid_start_row = row - rem(row, 3)
@@ -250,6 +267,7 @@ defmodule Sudoku do
       ...> |> Sudoku.delete({3, 7})
       ** (RuntimeError) Cannot delete a hint this way. Use `delete_hint/2`
   """
+  @spec delete(t(), cell()) :: t()
   def delete(%Sudoku{squares: squares} = sudoku, cell) when is_cell(cell) do
     if is_hint?(sudoku, cell) do
       raise "Cannot delete a hint this way. Use `delete_hint/2`"
@@ -272,6 +290,7 @@ defmodule Sudoku do
       ...> |> Sudoku.get({3, 7})
       9
   """
+  @spec put_hint(t(), cell(), cell_value()) :: t()
   def put_hint(%Sudoku{squares: squares, hints: hints} = sudoku, cell, val)
       when is_cell(cell) and is_cell_value(val) do
     %Sudoku{sudoku
@@ -282,6 +301,7 @@ defmodule Sudoku do
   @doc """
   Delete a hint from the board.
   """
+  @spec delete_hint(t(), cell()) :: t()
   def delete_hint(%Sudoku{squares: squares, hints: hints} = sudoku, cell) when is_cell(cell) do
     %Sudoku{
       sudoku
@@ -302,6 +322,7 @@ defmodule Sudoku do
       ...> |> Sudoku.is_hint?({1, 2})
       false
   """
+  @spec is_hint?(t(), cell()) :: boolean()
   def is_hint?(%Sudoku{hints: hints}, cell) when is_cell(cell) do
     not is_nil(Enum.at(hints, cell_index(cell)))
   end
@@ -322,6 +343,7 @@ defmodule Sudoku do
       ...> |> Sudoku.filled?({1, 2})
       false
   """
+  @spec filled?(t(), cell()) :: boolean()
   def filled?(%Sudoku{} = sudoku, cell) when is_cell(cell) do
     not empty?(sudoku, cell)
   end
@@ -338,6 +360,7 @@ defmodule Sudoku do
       ...> |> Sudoku.empty?({1, 2})
       true
   """
+  @spec empty?(t(), cell()) :: boolean()
   def empty?(%Sudoku{} = sudoku, cell) when is_cell(cell) do
     is_nil(get(sudoku, cell))
   end
@@ -356,6 +379,7 @@ defmodule Sudoku do
       ...> |> Sudoku.solved_count()
       0
   """
+  @spec solved_count(t()) :: non_neg_integer()
   def solved_count(%Sudoku{squares: squares}) do
     Enum.count(squares, fn x -> not is_nil(x) end)
   end
@@ -374,6 +398,7 @@ defmodule Sudoku do
       ...> |> Sudoku.hint_count()
       0
   """
+  @spec hint_count(t()) :: non_neg_integer()
   def hint_count(%Sudoku{hints: hints}) do
     Enum.count(hints, fn x -> not is_nil(x) end)
   end
@@ -392,6 +417,7 @@ defmodule Sudoku do
       ...> |> Sudoku.filled_count()
       0
   """
+  @spec filled_count(t()) :: non_neg_integer()
   def filled_count(%Sudoku{} = sudoku) do
     Sudoku.solved_count(sudoku) + Sudoku.hint_count(sudoku)
   end
