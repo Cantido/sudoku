@@ -62,7 +62,9 @@ defmodule Sudoku do
   defstruct squares: @empty_board,
             hints: @empty_board
 
-  defguardp is_cell(cell) when elem(cell, 0) in 0..8 and elem(cell, 1) in 0..8
+  defguardp is_row(row) when row in 0..8
+  defguardp is_column(col) when col in 0..8
+  defguardp is_cell(cell) when is_column(elem(cell, 0)) and is_row(elem(cell, 1))
   defguardp is_cell_value(x) when is_integer(x) and x in 1..9
 
   @doc """
@@ -192,23 +194,39 @@ defmodule Sudoku do
     end
   end
 
-  def get_row(sudoku, row) do
+  @doc """
+  Returns all values in the given row. Empty cells are returned as `nil`.
+
+      iex> Sudoku.new()
+      ...> |> Sudoku.put({1, 2}, 1)
+      ...> |> Sudoku.get_row(2)
+      [nil, 1, nil, nil, nil, nil, nil, nil, nil]
+  """
+  def get_row(sudoku, row) when is_row(row) do
     for i <- 0..8, do: get(sudoku, {i, row})
   end
 
-  def get_column(sudoku, column) do
+  @doc """
+  Returns all values in the given column. Empty cells are returned as `nil`.
+
+      iex> Sudoku.new()
+      ...> |> Sudoku.put({1, 2}, 1)
+      ...> |> Sudoku.get_column(1)
+      [nil, nil, 1, nil, nil, nil, nil, nil, nil]
+  """
+  def get_column(sudoku, column) when is_column(column) do
     for i <- 0..8, do: get(sudoku, {column, i})
   end
 
   @doc """
-  Gets the three-by-three subgrid containing the given cell.
+  Gets the three-by-three subgrid containing the given cell. Empty cells are returned as `nil`.
 
       iex> Sudoku.new()
       ...> |> Sudoku.put({0, 0}, 1)
       ...> |> Sudoku.get_subgrid_of({1, 1})
       [1, nil, nil, nil, nil, nil, nil, nil, nil]
   """
-  def get_subgrid_of(sudoku, {col, row}) do
+  def get_subgrid_of(sudoku, {col, row} = cell) when is_cell(cell) do
     subgrid_start_col = col - rem(col, 3)
     subgrid_start_row = row - rem(row, 3)
 
