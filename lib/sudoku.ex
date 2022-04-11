@@ -115,7 +115,7 @@ defmodule Sudoku do
       raise "Cannot insert a value that is already present in the current row, column, and subgrid"
     end
 
-    %Sudoku{sudoku | squares: List.insert_at(squares, cell_index(cell), val)}
+    %Sudoku{sudoku | squares: List.replace_at(squares, cell_index(cell), val)}
   end
 
   @doc """
@@ -138,6 +138,11 @@ defmodule Sudoku do
       false
 
       iex> Sudoku.new()
+      ...> |> Sudoku.put({0, 0}, 1)
+      ...> |> Sudoku.can_put?({1, 0}, 1)
+      false
+
+      iex> Sudoku.new()
       ...> |> Sudoku.put_hint({0, 0}, 9)
       ...> |> Sudoku.can_put?({0, 0}, 1)
       false
@@ -146,6 +151,7 @@ defmodule Sudoku do
       ...> |> Sudoku.put_hint({0, 0}, 1)
       ...> |> Sudoku.can_put?({1, 1}, 1)
       false
+
   """
   def can_put?(%Sudoku{} = sudoku, cell = {col, row}, val) when is_cell(cell) and is_cell_value(val) do
     if is_hint?(sudoku, cell) do
@@ -153,19 +159,11 @@ defmodule Sudoku do
     else
       # Clear the cell so that it isn't included in the row, column, and subgrid sets.
       # This way we can check if we can replace a value with another value.
-      sudoku = delete(sudoku, cell)
+      sudoku_with_space = delete(sudoku, cell)
 
-      row_values = for i <- 0..8, do: get(sudoku, {col, i})
-      column_values = for i <- 0..8, do: get(sudoku, {i, row})
-
-      subgrid_start_col = div(col, 3)
-      subgrid_start_row = div(row, 3)
-
-      subgrid_values =
-        for subgrid_col <- subgrid_start_col..(subgrid_start_col + 2),
-            subgrid_row <- subgrid_start_row..(subgrid_start_row + 2) do
-            get(sudoku, {subgrid_col, subgrid_row})
-        end
+      row_values = get_row(sudoku_with_space, row)
+      column_values = get_column(sudoku_with_space, col)
+      subgrid_values = get_subgrid_of(sudoku_with_space, cell)
 
       (val not in row_values) and (val not in column_values) and (val not in subgrid_values)
     end
@@ -185,7 +183,38 @@ defmodule Sudoku do
       9
   """
   def get(%Sudoku{squares: squares, hints: hints}, cell) when is_cell(cell) do
-    Enum.at(hints, cell_index(cell)) || Enum.at(squares, cell_index(cell))
+    index = cell_index(cell)
+    if hint_val = Enum.at(hints, index) do
+      hint_val
+    else
+      Enum.at(squares, index)
+    end
+  end
+
+  def get_row(sudoku, row) do
+    for i <- 0..8, do: get(sudoku, {i, row})
+  end
+
+  def get_column(sudoku, column) do
+    for i <- 0..8, do: get(sudoku, {column, i})
+  end
+
+  @doc """
+  Gets the three-by-three subgrid containing the given cell.
+
+      iex> Sudoku.new()
+      ...> |> Sudoku.put({0, 0}, 1)
+      ...> |> Sudoku.get_subgrid_of({1, 1})
+      [1, nil, nil, nil, nil, nil, nil, nil, nil]
+  """
+  def get_subgrid_of(sudoku, {col, row}) do
+    subgrid_start_col = col - rem(col, 3)
+    subgrid_start_row = row - rem(row, 3)
+
+    for subgrid_col <- subgrid_start_col..(subgrid_start_col + 2),
+        subgrid_row <- subgrid_start_row..(subgrid_start_row + 2) do
+        get(sudoku, {subgrid_col, subgrid_row})
+    end
   end
 
   @doc """
@@ -197,7 +226,6 @@ defmodule Sudoku do
       ...> |> Sudoku.empty?({1, 2})
       true
 
-
       iex> Sudoku.new()
       ...> |> Sudoku.put_hint({3, 7}, 9)
       ...> |> Sudoku.delete({3, 7})
@@ -208,7 +236,7 @@ defmodule Sudoku do
       raise "Cannot delete a hint this way. Use `delete_hint/2`"
     end
 
-    %Sudoku{sudoku | squares: List.insert_at(squares, cell_index(cell), nil)}
+    %Sudoku{sudoku | squares: List.replace_at(squares, cell_index(cell), nil)}
   end
 
   @doc """
@@ -226,7 +254,7 @@ defmodule Sudoku do
       9
   """
   def put_hint(%Sudoku{hints: hints} = sudoku, cell, val) when is_cell(cell) and is_cell_value(val) do
-    %Sudoku{sudoku | hints: List.insert_at(hints, cell_index(cell), val)}
+    %Sudoku{sudoku | hints: List.replace_at(hints, cell_index(cell), val)}
   end
 
   @doc """
@@ -234,8 +262,8 @@ defmodule Sudoku do
   """
   def delete_hint(%Sudoku{squares: squares, hints: hints} = sudoku, cell) when is_cell(cell) do
     %Sudoku{sudoku |
-      squares: List.insert_at(squares, cell_index(cell), nil),
-      hints: List.insert_at(hints, cell_index(cell), nil)
+      squares: List.replace_at(squares, cell_index(cell), nil),
+      hints: List.replace_at(hints, cell_index(cell), nil)
     }
   end
 
@@ -255,8 +283,8 @@ defmodule Sudoku do
     not is_nil(Enum.at(hints, cell_index(cell)))
   end
 
-  defp cell_index({x, y}) do
-    x + (y * 9)
+  defp cell_index({col, row}) do
+    col + (row * 9)
   end
 
   @doc """
