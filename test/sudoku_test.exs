@@ -57,4 +57,14 @@ defmodule SudokuTest do
 
     assert Sudoku.get_subgrid_of(board, {8, 8}) == [nil, nil, nil, nil, nil, nil, nil, nil, 9]
   end
+
+  test "put/3 raises when you try to put the same value in a subgrid twice" do
+    board =
+      Sudoku.new()
+      |> Sudoku.put({8, 8}, 9)
+
+    assert_raise RuntimeError, fn ->
+      Sudoku.put(board, {7, 7}, 9)
+    end
+  end
 end
