@@ -259,7 +259,7 @@ defmodule Sudoku do
   end
 
   @doc """
-  Put a hint into the board. Existing hints will be overridden.
+  Put a hint into the board. The cell will be overwritten.
 
       iex> Sudoku.new()
       ...> |> Sudoku.put_hint({1, 2}, 1)
@@ -272,9 +272,11 @@ defmodule Sudoku do
       ...> |> Sudoku.get({3, 7})
       9
   """
-  def put_hint(%Sudoku{hints: hints} = sudoku, cell, val)
+  def put_hint(%Sudoku{squares: squares, hints: hints} = sudoku, cell, val)
       when is_cell(cell) and is_cell_value(val) do
-    %Sudoku{sudoku | hints: List.replace_at(hints, cell_index(cell), val)}
+    %Sudoku{sudoku
+      | squares: List.replace_at(squares, cell_index(cell), nil),
+        hints: List.replace_at(hints, cell_index(cell), val)}
   end
 
   @doc """
