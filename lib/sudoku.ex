@@ -62,7 +62,7 @@ defmodule Sudoku do
   defstruct squares: @empty_board,
             hints: @empty_board
 
-  @opaque t() :: %__MODULE__{
+  @type t :: %__MODULE__{
     squares: nonempty_list(cell_value()),
     hints: nonempty_list(cell_value())
   }
