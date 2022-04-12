@@ -184,5 +184,16 @@ defmodule SudokuPropertyTest do
     end
   end
 
-  # TODO: Property test for putting values in same subgrid
+  property "cannot put a value in the same subgrid twice" do
+    check all row1 <- integer(0..2),
+              row2 <- integer(0..2),
+              row1 != row2,
+              col1 <- integer(0..2),
+              col2 <- integer(0..2),
+              col1 != col2,
+              val <- cell_value() do
+      board = Sudoku.new() |> Sudoku.put({col1, row1}, val)
+      refute Sudoku.can_put?(board, {col2, row2}, val)
+    end
+  end
 end
