@@ -63,9 +63,9 @@ defmodule Sudoku do
             hints: @empty_board
 
   @type t :: %__MODULE__{
-    squares: nonempty_list(cell_value()),
-    hints: nonempty_list(cell_value())
-  }
+          squares: nonempty_list(cell_value()),
+          hints: nonempty_list(cell_value())
+        }
 
   @type row() :: 0..8
   @type column() :: 0..8
@@ -293,9 +293,11 @@ defmodule Sudoku do
   @spec put_hint(t(), cell(), cell_value()) :: t()
   def put_hint(%Sudoku{squares: squares, hints: hints} = sudoku, cell, val)
       when is_cell(cell) and is_cell_value(val) do
-    %Sudoku{sudoku
+    %Sudoku{
+      sudoku
       | squares: List.replace_at(squares, cell_index(cell), nil),
-        hints: List.replace_at(hints, cell_index(cell), val)}
+        hints: List.replace_at(hints, cell_index(cell), val)
+    }
   end
 
   @doc """
