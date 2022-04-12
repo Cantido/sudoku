@@ -23,6 +23,7 @@ defmodule Sudoku.MixProject do
     [
       {:dialyxir, "~> 1.0", only: :dev, runtime: false},
       {:doctor, "~> 0.18.0", only: :dev},
+      {:ex_check, "~> 0.14.0", only: :dev, runtime: false},
       {:ex_doc, "~> 0.27", only: :dev, runtime: false},
       {:stream_data, "~> 0.5", only: [:dev, :test]}
     ]
