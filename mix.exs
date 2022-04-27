@@ -5,7 +5,7 @@ defmodule Sudoxu.MixProject do
     [
       app: :sudoxu,
       version: "0.1.0",
-      elixir: "~> 1.13",
+      elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -21,7 +21,7 @@ defmodule Sudoxu.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.6", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0", only: :dev, runtime: false},
       {:doctor, "~> 0.18.0", only: :dev},
       {:ex_check, "~> 0.14.0", only: :dev, runtime: false},
