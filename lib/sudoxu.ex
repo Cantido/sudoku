@@ -2,6 +2,8 @@ defmodule Sudoxu do
   @moduledoc """
   A Sudoxu board.
 
+  ## Basic Usage
+
   A Sudoxu is a nine-by-nine set of cells, each cell can contain an integer with a value of one through nine.
   Coordinates of cells are zero-indexed.
 
@@ -40,6 +42,8 @@ defmodule Sudoxu do
       iex> Sudoxu.empty?(board, {5, 6})
       true
 
+  ## Hints (AKA Givens)
+
   To prepare puzzles, you can place hints into the board.
   Hints are special cells that cannot be overridden with `put/3`, and will raise an error if you try to do so.
   You can put a hint into the board with `put_hint/3`, and remove it with `delete_hint/2`.
@@ -55,16 +59,34 @@ defmodule Sudoxu do
       ...> |> Sudoxu.put_hint({1, 2}, 1)
       ...> |> Sudoxu.is_hint?({1, 2})
       true
+
+  ## Pencilmarks
+
+  A grid also supports pencilmarks.
+  Pencilmarks are used by solvers, usually as a list of candidate values for a cell.
+  The pencilmarks for all cells are initially empty.
+  Use `get_pencilmarks/2`, `add_pencilmark/3`, and `delete_pencilmark/3` to work with them.
+
+      iex> Sudoxu.new()
+      ...> |> Sudoxu.add_pencilmark({3, 8}, 1)
+      ...> |> Sudoxu.add_pencilmark({3, 8}, 2)
+      ...> |> Sudoxu.delete_pencilmark({3, 8}, 1)
+      ...> |> Sudoxu.get_pencilmarks({3, 8})
+      #MapSet<[2]>
+
   """
 
   @empty_board Stream.cycle([nil]) |> Enum.take(81)
+  @empty_pencilmarks Stream.cycle([MapSet.new()]) |> Enum.take(81)
 
   defstruct squares: @empty_board,
-            hints: @empty_board
+            hints: @empty_board,
+            pencilmarks: @empty_pencilmarks
 
   @type t :: %__MODULE__{
           squares: nonempty_list(cell_value()),
-          hints: nonempty_list(cell_value())
+          hints: nonempty_list(cell_value()),
+          pencilmarks: nonempty_list(MapSet.t())
         }
 
   @type row() :: 0..8
@@ -331,6 +353,51 @@ defmodule Sudoxu do
 
   defp cell_index({col, row}) do
     col + row * 9
+  end
+
+  @doc """
+  Gets the values in the cell's pencilmarks.
+  """
+  def get_pencilmarks(%Sudoxu{pencilmarks: pencilmarks}, cell) do
+    Enum.at(pencilmarks, cell_index(cell))
+  end
+
+  @doc """
+  Adds a value to the cell's pencilmarks.
+
+  Pencilmarks are a temporary notation space for each cell,
+  usually containing the candidate values for the cell.
+
+  ## Examples
+
+      iex> Sudoxu.new()
+      ...> |> Sudoxu.add_pencilmark({0, 0}, 1)
+      ...> |> Sudoxu.get_pencilmarks({0, 0})
+      #MapSet<[1]>
+  """
+  def add_pencilmark(%Sudoxu{pencilmarks: pencilmarks} = sudoxu, cell, value) do
+    pencilmarks =
+      List.update_at(pencilmarks, cell_index(cell), &MapSet.put(&1, value))
+
+    %Sudoxu{sudoxu | pencilmarks: pencilmarks}
+  end
+
+  @doc """
+  Deletes a value in the cell's pencilmarks.
+
+  ## Examples
+
+      iex> Sudoxu.new()
+      ...> |> Sudoxu.add_pencilmark({0, 0}, 1)
+      ...> |> Sudoxu.delete_pencilmark({0, 0}, 1)
+      ...> |> Sudoxu.get_pencilmarks({0, 0})
+      #MapSet<[]>
+  """
+  def delete_pencilmark(%Sudoxu{pencilmarks: pencilmarks} = sudoxu, cell, value) do
+    pencilmarks =
+      List.update_at(pencilmarks, cell_index(cell), &MapSet.delete(&1, value))
+
+    %Sudoxu{sudoxu | pencilmarks: pencilmarks}
   end
 
   @doc """
