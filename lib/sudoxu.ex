@@ -112,6 +112,35 @@ defmodule Sudoxu do
   end
 
   @doc """
+  Builds a new grid from an 81-digit string of numbers.
+  The digit `0` (zero) is used to denote an empty cell.
+
+  ## Examples
+
+      iex> Sudoxu.from_digit_string("310004069000000200008005040000000005006000017807030000590700006600003050000100002")
+      ...> |> Sudoxu.get({0, 0})
+      3
+
+  """
+  def from_digit_string(str) do
+    if String.length(str) != 81 do
+      raise ArgumentError, "Argument must be an 81-digit string, but was #{inspect str}"
+    end
+
+    hints =
+      String.graphemes(str)
+      |> Enum.map(fn digit ->
+        val = String.to_integer(digit)
+        if val == 0 do
+          nil
+        else
+          val
+        end
+      end)
+    %Sudoxu{hints: hints}
+  end
+
+  @doc """
   Put a value into a cell. Normal cell values are replaced, but this function will raise an error if you try to put a value over a hint.
   Use `is_hint?/2` to check if a cell contains a hint first.
   This function will raise if you try to put a value that breaks the Sudoxu rules.
